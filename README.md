@@ -7,7 +7,7 @@
 ![Calico](https://img.shields.io/badge/CNI-Calico_v3.29-EE6B2F)
 ![Platform](https://img.shields.io/badge/Platform-Vagrant_%7C_Bare_Metal-8B5CF6)
 
-*By [Nisala](https://github.com/nisalatp) — An interactive, educational toolkit for building highly-available Kubernetes clusters the right way.*
+*By [Nisala Aloka Bandara](https://github.com/nisalatp) — An interactive, educational toolkit for building highly-available Kubernetes clusters the right way.*
 
 ---
 
@@ -46,7 +46,7 @@ By the end of this guide, you'll have a fully working **highly-available (HA) Ku
 | **Calico CNI** | Pod networking with VXLAN encapsulation |
 | **containerd** | The container runtime (with `SystemdCgroup` properly configured) |
 
-> **💡 Nisala's note:** The default topology is `2 LB + 3 CP + 2 WK`, but you can customise everything — even run `1 LB + 1 CP + 0 WK` on a tight laptop. The `configure.sh` wizard makes this painless.
+> **💡 NisalaTP's note:** The default topology is `2 LB + 3 CP + 2 WK`, but you can customise everything — even run `1 LB + 1 CP + 0 WK` on a tight laptop. The `configure.sh` wizard makes this painless.
 
 ---
 
@@ -86,7 +86,7 @@ By the end of this guide, you'll have a fully working **highly-available (HA) Ku
               └─────────────┘     └───────────────┘
 ```
 
-> **💡 Nisala's note for beginners:** Don't worry if this looks complex — the scripts set up each layer automatically. I just want you to see the big picture of what you're building. In a production Kubernetes cluster, the load balancer layer is critical: if one load balancer fails, the VIP (Virtual IP) floats to the other, so your cluster API stays reachable. That's what "highly available" means.
+> **💡 NisalaTP's note for beginners:** Don't worry if this looks complex — the scripts set up each layer automatically. I just want you to see the big picture of what you're building. In a production Kubernetes cluster, the load balancer layer is critical: if one load balancer fails, the VIP (Virtual IP) floats to the other, so your cluster API stays reachable. That's what "highly available" means.
 
 ---
 
@@ -127,7 +127,7 @@ KubeCluseter/
 └── .gitignore
 ```
 
-> **💡 Nisala's note:** Each `setup-*.sh` script is **interactive and narrated** — it prints colour-coded stages explaining exactly what it's doing and why. You're not blindly running commands; you're learning infrastructure as you go.
+> **💡 NisalaTP's note:** Each `setup-*.sh` script is **interactive and narrated** — it prints colour-coded stages explaining exactly what it's doing and why. You're not blindly running commands; you're learning infrastructure as you go.
 
 ---
 
@@ -164,7 +164,7 @@ Run the interactive configurator. It will ask you a series of questions and gene
 | Pod CIDR | `10.244.0.0/16` | The IP range for pods — **must not overlap** your subnet |
 | Per-VM RAM | varies | Memory allocation per role (LB: 512 MB, CP: 2048 MB, WK: 1536 MB) |
 
-> **💡 Nisala's tip for beginners:** Just press **Enter** on every question to accept the defaults. That gives you a solid, standard HA cluster. You can always re-run `./configure.sh` later to change things.
+> **💡 NisalaTP's tip for beginners:** Just press **Enter** on every question to accept the defaults. That gives you a solid, standard HA cluster. You can always re-run `./configure.sh` later to change things.
 
 > **🏗️ Pro tip:** On a laptop with only 8 GB RAM, try `1 LB + 1 CP + 1 WK` with reduced memory (CP: 1800 MB, WK: 1024 MB). It won't be HA, but it's great for quick experiments.
 
@@ -212,7 +212,7 @@ curl -fsSL https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/setup-lo
 | 4 — Keepalived VIP | Configures the floating VIP with VRRP (one node is MASTER, others are BACKUP) |
 | 5 — Verify | Checks that port 6443 is listening and the VIP is assigned |
 
-> **💡 Nisala's note:** When it asks **"Is this the PRIMARY (MASTER) load balancer?"** — say **yes** on `k8s-lb1` and **no** on `k8s-lb2`. The MASTER gets a higher VRRP priority so it holds the VIP by default. If it fails, the VIP automatically moves to the BACKUP.
+> **💡 NisalaTP's note:** When it asks **"Is this the PRIMARY (MASTER) load balancer?"** — say **yes** on `k8s-lb1` and **no** on `k8s-lb2`. The MASTER gets a higher VRRP priority so it holds the VIP by default. If it fails, the VIP automatically moves to the BACKUP.
 
 > ⚠️ **The backends will show as DOWN** at this point — that's completely normal. The control planes haven't been set up yet, so there's nothing listening on their `:6443`.
 
@@ -243,7 +243,7 @@ curl -fsSL https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/setup-co
 | 8 — Calico | Installs the Tigera operator and creates an IP pool matching your pod CIDR |
 | 9 — Join commands | Generates and prints both the **control-plane join** and **worker join** commands |
 
-> **💡 Nisala's note:** On Vagrant, the join commands are automatically saved to `/vagrant/join-commands.txt` — a shared folder that all VMs can access. This means when you run the scripts on the other nodes, the join command is **pre-filled** for you. Just press Enter.
+> **💡 NisalaTP's note:** On Vagrant, the join commands are automatically saved to `/vagrant/join-commands.txt` — a shared folder that all VMs can access. This means when you run the scripts on the other nodes, the join command is **pre-filled** for you. Just press Enter.
 
 ---
 
@@ -389,7 +389,7 @@ The VMs are tuned to be as light as possible on your machine:
 | 1 LB + 1 CP + 1 WK | 1×512 + 1×2048 + 1×1536 | **~4 GB** |
 | 1 LB + 1 CP + 0 WK | 1×512 + 1×2048 | **~2.5 GB** |
 
-> **💡 Nisala's tip:** Leave **at least 4 GB free** for your host OS. If you have 16 GB total, the default 10 GB cluster is comfortable. On 8 GB, go with the 4 GB topology.
+> **💡 NisalaTP's tip:** Leave **at least 4 GB free** for your host OS. If you have 16 GB total, the default 10 GB cluster is comfortable. On 8 GB, go with the 4 GB topology.
 
 ---
 
@@ -533,4 +533,4 @@ This project is open-source and available under the [MIT License](LICENSE).
 
 ---
 
-**Built with ☕ by [Nisala](https://github.com/nisalatp)** — If this helped you learn Kubernetes, consider giving it a ⭐
+**Built with ☕ by [Nisala Aloka Bandara (NisalaTP)](https://github.com/nisalatp)** — If this helped you learn Kubernetes, consider giving it a ⭐
