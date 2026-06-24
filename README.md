@@ -28,23 +28,23 @@ VIP + N control planes + N workers) on VirtualBox, then build the cluster by run
 # 2) create the VMs
 vagrant up
 
-# 3) host the scripts so the VMs can curl them (run on your host or k8s-lb1)
-./serve.sh           # prints the curl URLs (uses http://<ip>:8000/...)
+```bash
+# 3) You can now run the scripts directly from your public GitHub repository!
 ```
 
-Then, in this order, SSH into each VM (`vagrant ssh <name>`) and run the matching script:
+Then, in this order, SSH into each VM (`vagrant ssh <name>`) and run the matching script directly from GitHub:
 
 ```bash
 # on k8s-lb1 and k8s-lb2:
-curl -fsSL http://<serve-ip>:8000/setup-loadbalancer.sh | bash
+curl -fsSL https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/setup-loadbalancer.sh | bash
 
 # on k8s-cp1 (answer "yes" to FIRST control plane):
-curl -fsSL http://<serve-ip>:8000/setup-controlplane.sh | bash
+curl -fsSL https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/setup-controlplane.sh | bash
 # on k8s-cp2 and k8s-cp3 (answer "no"; it auto-reads the join command on Vagrant):
-curl -fsSL http://<serve-ip>:8000/setup-controlplane.sh | bash
+curl -fsSL https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/setup-controlplane.sh | bash
 
 # on k8s-w1 and k8s-w2:
-curl -fsSL http://<serve-ip>:8000/setup-worker.sh | bash
+curl -fsSL https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/setup-worker.sh | bash
 ```
 
 Verify on any control plane:
@@ -55,11 +55,10 @@ kubectl get nodes -o wide
 
 ## Hosting the scripts
 
-`curl | bash` needs a URL. Two easy options:
+`curl | bash` needs a URL. By default, you can pull your scripts directly from the GitHub repository you created:
 
-- **Local:** run `./serve.sh` on a machine the nodes can reach (it runs `python3 -m http.server`).
-- **GitHub:** push this folder to a repo and use the raw URLs, e.g.
-  `curl -fsSL https://raw.githubusercontent.com/<you>/<repo>/main/cluster-builder/setup-worker.sh | bash`.
+- **GitHub (Primary):** The commands in the Quick Start section above pull securely from `https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/...`
+- **Local (Fallback):** If your VMs don't have internet access, you can run `./serve.sh` on your host machine to serve them over your local network using python's built-in HTTP server.
 
 ## Footprint (running ~7 VMs at once)
 
