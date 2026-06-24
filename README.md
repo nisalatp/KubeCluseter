@@ -1,13 +1,11 @@
-<![CDATA[<div align="center">
-
 # ☸️ KubeCluseter
 
-### Production-Grade HA Kubernetes — Built From Scratch, One Script at a Time
+**Production-Grade HA Kubernetes — Built From Scratch, One Script at a Time**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](#license)
-[![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.36-326CE5?logo=kubernetes&logoColor=white)](#)
-[![Calico](https://img.shields.io/badge/CNI-Calico_v3.29-EE6B2F)](#)
-[![Platform](https://img.shields.io/badge/Platform-Vagrant_%7C_Bare_Metal-8B5CF6)](#)
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.36-326CE5?logo=kubernetes&logoColor=white)
+![Calico](https://img.shields.io/badge/CNI-Calico_v3.29-EE6B2F)
+![Platform](https://img.shields.io/badge/Platform-Vagrant_%7C_Bare_Metal-8B5CF6)
 
 *By [Nisala](https://github.com/nisalatp) — An interactive, educational toolkit for building highly-available Kubernetes clusters the right way.*
 
@@ -17,32 +15,22 @@
 
 **🏗️ If you're a professional** — use this to rapidly spin up disposable HA labs for testing, demos, or training. The scripts work on both Vagrant VMs and bare-metal / cloud servers.
 
-</div>
-
 ---
 
 ## 📖 Table of Contents
 
-- [What You'll Build](#-what-youll-build)
-- [Architecture](#-architecture)
-- [Prerequisites](#-prerequisites)
-- [Repository Contents](#-repository-contents)
-- [Getting Started](#-getting-started)
-  - [Step 1 — Clone This Repository](#step-1--clone-this-repository)
-  - [Step 2 — Configure Your Cluster](#step-2--configure-your-cluster)
-  - [Step 3 — Create the Virtual Machines](#step-3--create-the-virtual-machines)
-  - [Step 4 — Set Up the Load Balancers](#step-4--set-up-the-load-balancers)
-  - [Step 5 — Initialise the First Control Plane](#step-5--initialise-the-first-control-plane)
-  - [Step 6 — Join Additional Control Planes](#step-6--join-additional-control-planes)
-  - [Step 7 — Join the Workers](#step-7--join-the-workers)
-  - [Step 8 — Verify Your Cluster](#step-8--verify-your-cluster)
-- [Using on Bare Metal / Cloud Servers](#-using-on-bare-metal--cloud-servers)
-- [Topology Reference](#-topology-reference)
-- [Resource Footprint](#-resource-footprint)
-- [Customisation Guide](#-customisation-guide)
-- [Troubleshooting](#-troubleshooting)
-- [FAQ](#-faq)
-- [License](#-license)
+1. [What You'll Build](#-what-youll-build)
+2. [Architecture](#-architecture)
+3. [Prerequisites](#-prerequisites)
+4. [Repository Contents](#-repository-contents)
+5. [Getting Started](#-getting-started)
+6. [Using on Bare Metal / Cloud Servers](#-using-on-bare-metal--cloud-servers)
+7. [Topology Reference](#-topology-reference)
+8. [Resource Footprint](#-resource-footprint)
+9. [Customisation Guide](#-customisation-guide)
+10. [Troubleshooting](#-troubleshooting)
+11. [FAQ](#-faq)
+12. [License](#-license)
 
 ---
 
@@ -65,35 +53,37 @@ By the end of this guide, you'll have a fully working **highly-available (HA) Ku
 ## 🏛 Architecture
 
 ```
-                        ┌─────────────────────┐
-                        │    Your Workstation  │
-                        │     (kubectl)        │
-                        └──────────┬──────────┘
-                                   │
-                          ┌────────▼────────┐
-                          │  VIP: k8s-vip   │  ← Floating IP (Keepalived)
-                          │  192.168.56.10  │
-                          └────────┬────────┘
-                        ┌──────────┴──────────┐
-                   ┌────▼─────┐         ┌─────▼────┐
-                   │  k8s-lb1 │         │  k8s-lb2 │   ← HAProxy (round-robin
-                   │  :6443   │         │  :6443   │      to control planes)
-                   └────┬─────┘         └─────┬────┘
-                        │    ┌────────┐       │
-              ┌─────────┼────┤ :6443  ├───────┼─────────┐
-         ┌────▼────┐  ┌─▼────▼──┐  ┌──▼──────▼┐        │
-         │ k8s-cp1 │  │ k8s-cp2 │  │ k8s-cp3  │  Control Planes
-         │ (etcd)  │  │ (etcd)  │  │ (etcd)   │  (odd count = etcd quorum)
-         └────┬────┘  └────┬────┘  └────┬─────┘
-              │            │            │
-         ┌────▼────────────▼────────────▼────┐
-         │         Calico Pod Network        │
-         │         10.244.0.0/16 (VXLAN)     │
-         └────┬────────────────────────┬─────┘
-         ┌────▼────┐            ┌──────▼───┐
-         │ k8s-w1  │            │  k8s-w2  │   ← Worker Nodes
-         │ (pods)  │            │  (pods)  │      (your workloads)
-         └─────────┘            └──────────┘
+                     ┌─────────────────────┐
+                     │   Your Workstation   │
+                     │      (kubectl)       │
+                     └──────────┬──────────┘
+                                │
+                       ┌────────▼────────┐
+                       │   VIP: k8s-vip  │   ◄── Floating IP (Keepalived)
+                       │  192.168.56.10  │
+                       └────────┬────────┘
+                     ┌──────────┴──────────┐
+                ┌────▼─────┐         ┌─────▼────┐
+                │  k8s-lb1 │         │  k8s-lb2 │    ◄── HAProxy
+                │  :6443   │         │  :6443   │    (round-robin to CPs)
+                └────┬─────┘         └─────┬────┘
+                     └──────────┬──────────┘
+                                │ :6443
+              ┌─────────────────┼─────────────────┐
+         ┌────▼────┐      ┌────▼────┐      ┌─────▼───┐
+         │ k8s-cp1 │      │ k8s-cp2 │      │ k8s-cp3 │  ◄── Control Planes
+         │ (etcd)  │      │ (etcd)  │      │ (etcd)  │  (odd count for quorum)
+         └────┬────┘      └────┬────┘      └────┬────┘
+              └─────────────────┼────────────────┘
+                                │
+                  ┌─────────────┴─────────────┐
+                  │   Calico Pod Network       │
+                  │   10.244.0.0/16 (VXLAN)    │
+                  └──────┬──────────────┬──────┘
+              ┌──────────▼──┐     ┌─────▼─────────┐
+              │   k8s-w1    │     │    k8s-w2     │  ◄── Worker Nodes
+              │   (pods)    │     │    (pods)     │  (your workloads)
+              └─────────────┘     └───────────────┘
 ```
 
 > **💡 Nisala's note for beginners:** Don't worry if this looks complex — the scripts set up each layer automatically. I just want you to see the big picture of what you're building. In a production Kubernetes cluster, the load balancer layer is critical: if one load balancer fails, the VIP (Virtual IP) floats to the other, so your cluster API stays reachable. That's what "highly available" means.
@@ -116,7 +106,7 @@ By the end of this guide, you'll have a fully working **highly-available (HA) Ku
 | Requirement | Details |
 |-------------|---------|
 | **OS** | Debian 12 or Ubuntu 22.04/24.04 (any `apt`-based system with systemd) |
-| **Network** | All nodes must be able to reach each other. Port `6443` must be open between load balancers and control planes. |
+| **Network** | All nodes must be able to reach each other. Port `6443` must be open between LBs and CPs. |
 | **curl** | Must be installed on every node |
 | **Root / sudo** | The scripts use `sudo` automatically when not running as root |
 
@@ -127,13 +117,13 @@ By the end of this guide, you'll have a fully working **highly-available (HA) Ku
 ```
 KubeCluseter/
 ├── configure.sh            ← Interactive wizard: builds cluster.yaml by asking you questions
-├── cluster.yaml            ← Your cluster definition (topology, IPs, VM sizes — auto-generated or hand-editable)
-├── Vagrantfile             ← Reads cluster.yaml → creates VMs with correct hostnames, IPs, and /etc/hosts
+├── cluster.yaml            ← Your cluster definition (topology, IPs, VM sizes)
+├── Vagrantfile             ← Reads cluster.yaml → creates VMs with hostnames, IPs, /etc/hosts
 ├── setup-loadbalancer.sh   ← Installs HAProxy + Keepalived VIP on a load balancer node
-├── setup-controlplane.sh   ← Installs containerd, kubeadm, kubelet → inits or joins a control plane
-├── setup-worker.sh         ← Installs containerd, kubeadm, kubelet → joins as a worker node
+├── setup-controlplane.sh   ← Installs containerd, kubeadm → inits or joins a control plane
+├── setup-worker.sh         ← Installs containerd, kubeadm → joins as a worker node
 ├── serve.sh                ← Optional: serves scripts over HTTP for air-gapped local networks
-├── publish.sh              ← Pushes this repo to your own GitHub (already done for you!)
+├── publish.sh              ← Pushes this repo to your own GitHub
 └── .gitignore
 ```
 
@@ -201,13 +191,13 @@ This reads your `cluster.yaml` and creates all the VMs with:
 SSH into **each load balancer** and run the load balancer setup script:
 
 ```bash
-# On k8s-lb1:
+# Terminal 1 — on k8s-lb1:
 vagrant ssh k8s-lb1
 curl -fsSL https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/setup-loadbalancer.sh | bash
 ```
 
 ```bash
-# On k8s-lb2:
+# Terminal 2 — on k8s-lb2:
 vagrant ssh k8s-lb2
 curl -fsSL https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/setup-loadbalancer.sh | bash
 ```
@@ -216,7 +206,7 @@ curl -fsSL https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/setup-lo
 
 | Stage | What It Does |
 |-------|-------------|
-| 1 — Gather settings | Reads your VIP, control-plane IPs (auto-detected from `cluster.yaml` on Vagrant) |
+| 1 — Gather settings | Reads your VIP and control-plane IPs (auto-detected from `cluster.yaml` on Vagrant) |
 | 2 — Install | Installs `haproxy` and `keepalived` via apt |
 | 3 — HAProxy config | Adds a TCP frontend on `:6443` that round-robins to your control-plane IPs |
 | 4 — Keepalived VIP | Configures the floating VIP with VRRP (one node is MASTER, others are BACKUP) |
@@ -224,7 +214,7 @@ curl -fsSL https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/setup-lo
 
 > **💡 Nisala's note:** When it asks **"Is this the PRIMARY (MASTER) load balancer?"** — say **yes** on `k8s-lb1` and **no** on `k8s-lb2`. The MASTER gets a higher VRRP priority so it holds the VIP by default. If it fails, the VIP automatically moves to the BACKUP.
 
-> **⚠️ The backends will show as DOWN** at this point — that's completely normal. The control planes haven't been set up yet, so there's nothing listening on their `:6443`.
+> ⚠️ **The backends will show as DOWN** at this point — that's completely normal. The control planes haven't been set up yet, so there's nothing listening on their `:6443`.
 
 ---
 
@@ -248,7 +238,7 @@ curl -fsSL https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/setup-co
 | 3 — Kernel | Loads `overlay` and `br_netfilter` modules; enables IP forwarding |
 | 4 — containerd | Installs and configures containerd with `SystemdCgroup = true` |
 | 5 — Kube tools | Adds the official Kubernetes apt repo; installs `kubeadm`, `kubelet`, `kubectl` |
-| 6 — Init | Runs `kubeadm init` with `--control-plane-endpoint` pointing to the VIP |
+| 6 — kubeadm init | Runs `kubeadm init` with `--control-plane-endpoint` pointing to the VIP |
 | 7 — kubectl | Copies the admin kubeconfig to your home directory |
 | 8 — Calico | Installs the Tigera operator and creates an IP pool matching your pod CIDR |
 | 9 — Join commands | Generates and prints both the **control-plane join** and **worker join** commands |
@@ -263,7 +253,9 @@ curl -fsSL https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/setup-co
 # On k8s-cp2:
 vagrant ssh k8s-cp2
 curl -fsSL https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/setup-controlplane.sh | bash
+```
 
+```bash
 # On k8s-cp3:
 vagrant ssh k8s-cp3
 curl -fsSL https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/setup-controlplane.sh | bash
@@ -281,7 +273,9 @@ The script will auto-detect the join command from `/vagrant/join-commands.txt`. 
 # On k8s-w1:
 vagrant ssh k8s-w1
 curl -fsSL https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/setup-worker.sh | bash
+```
 
+```bash
 # On k8s-w2:
 vagrant ssh k8s-w2
 curl -fsSL https://raw.githubusercontent.com/nisalatp/KubeCluseter/main/setup-worker.sh | bash
@@ -316,7 +310,7 @@ k8s-w1    Ready    <none>          4m    v1.36.x   192.168.56.21    ...
 k8s-w2    Ready    <none>          3m    v1.36.x   192.168.56.22    ...
 ```
 
-> **🎉 Congratulations!** You now have a production-grade HA Kubernetes cluster running on your machine.
+🎉 **Congratulations!** You now have a production-grade HA Kubernetes cluster running on your machine.
 
 ---
 
@@ -405,19 +399,20 @@ The VMs are tuned to be as light as possible on your machine:
 
 Re-run `./configure.sh` — it regenerates `cluster.yaml`. Then `vagrant destroy -f && vagrant up` to rebuild.
 
-### Edit `cluster.yaml` directly
+### Edit cluster.yaml directly
 
 ```yaml
 # Example: add a third worker
 workers:
   - { name: k8s-w1, ip: 192.168.56.21 }
   - { name: k8s-w2, ip: 192.168.56.22 }
-  - { name: k8s-w3, ip: 192.168.56.23 }  # ← add this
+  - { name: k8s-w3, ip: 192.168.56.23 }  # add this line
 ```
 
 ### Change the Kubernetes version
 
 Edit the `k8s_version` field in `cluster.yaml`:
+
 ```yaml
 k8s_version: "v1.36"   # Change to v1.35, v1.34, etc.
 ```
@@ -454,7 +449,7 @@ kubectl get pods -n calico-system
 watch kubectl get pods -A
 ```
 
-### `kubeadm init` fails with "port 6443 already in use"
+### kubeadm init fails with "port 6443 already in use"
 
 **Cause:** A previous attempt didn't clean up.
 
@@ -493,8 +488,7 @@ sudo haproxy -c -f /etc/haproxy/haproxy.cfg
 # Ensure VirtualBox host-only network exists:
 VBoxManage list hostonlyifs
 
-# If the network is missing, Vagrant creates it automatically on 'vagrant up'.
-# If issues persist, try:
+# If issues persist, try a clean rebuild:
 vagrant destroy -f
 vagrant up
 ```
@@ -507,43 +501,29 @@ If you see pods stuck in `ContainerCreating` with network errors, your pod CIDR 
 
 ## ❓ FAQ
 
-<details>
-<summary><strong>Can I use this for production?</strong></summary>
+**Can I use this for production?**
 
-The scripts install production-grade components (kubeadm, containerd, Calico, HAProxy + Keepalived), but for a true production deployment you'd also want: TLS for etcd, node hardening, monitoring (Prometheus), logging (Fluentd/Loki), backup strategy (Velero), and proper DNS.
+The scripts install production-grade components (kubeadm, containerd, Calico, HAProxy + Keepalived), but for a true production deployment you'd also want: TLS for etcd, node hardening, monitoring (Prometheus), logging (Fluentd/Loki), backup strategy (Velero), and proper DNS. This project is designed primarily as a **learning and lab environment** that mirrors production architecture.
 
-This project is designed primarily as a **learning and lab environment** that mirrors production architecture.
-</details>
+**Why `curl | bash`? Isn't that unsafe?**
 
-<details>
-<summary><strong>Why <code>curl | bash</code>? Isn't that unsafe?</strong></summary>
+For a controlled lab environment, it's convenient and standard practice (Docker, Homebrew, and Rust all use this pattern). The scripts are in this public repo — you can read every line before running them. For production, clone the repo and run the scripts locally instead.
 
-For a controlled lab environment, it's convenient and standard practice (many tools like Docker, Homebrew, and Rust use this pattern). The scripts are in this public repo — you can read every line before running them. For production, clone the repo and run the scripts locally instead.
-</details>
-
-<details>
-<summary><strong>Can I add nodes after the cluster is built?</strong></summary>
+**Can I add nodes after the cluster is built?**
 
 Yes! Generate a new join token on any control plane (`kubeadm token create --print-join-command`) and run the appropriate setup script on the new node.
-</details>
 
-<details>
-<summary><strong>Do the scripts work on RHEL / CentOS / Fedora?</strong></summary>
+**Do the scripts work on RHEL / CentOS / Fedora?**
 
 Not yet — they use `apt-get`. Adapting them for `dnf`/`yum` is straightforward (the Kubernetes repo setup is the main change), but it's not currently supported.
-</details>
 
-<details>
-<summary><strong>What CNI plugins are supported?</strong></summary>
+**What CNI plugins are supported?**
 
 The scripts install **Calico** with VXLAN encapsulation. If you prefer Flannel, Cilium, or another CNI, skip the Calico stage in the control-plane script and install your preferred CNI manually after `kubeadm init`.
-</details>
 
-<details>
-<summary><strong>Can I use this without Vagrant?</strong></summary>
+**Can I use this without Vagrant?**
 
 Absolutely. See [Using on Bare Metal / Cloud Servers](#-using-on-bare-metal--cloud-servers). The scripts just need a Debian/Ubuntu machine with `curl` and `sudo` access.
-</details>
 
 ---
 
@@ -553,11 +533,4 @@ This project is open-source and available under the [MIT License](LICENSE).
 
 ---
 
-<div align="center">
-
-**Built with ☕ by [Nisala](https://github.com/nisalatp)**
-
-*If this helped you learn Kubernetes, consider giving it a ⭐*
-
-</div>
-]]>
+**Built with ☕ by [Nisala](https://github.com/nisalatp)** — If this helped you learn Kubernetes, consider giving it a ⭐
